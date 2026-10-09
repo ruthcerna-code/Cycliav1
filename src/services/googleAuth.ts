@@ -14,7 +14,10 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
 export const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.events'
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/meetings.space.created',
+  'https://www.googleapis.com/auth/meetings.space.readonly',
+  'https://www.googleapis.com/auth/meetings.space.settings'
 ];
 
 const provider = new GoogleAuthProvider();
@@ -191,3 +194,132 @@ export const syncCycleToGoogleCalendar = async (
     events: createdEvents
   };
 };
+
+export interface MeetSpace {
+  name: string;
+  meetingUri: string;
+  meetingCode: string;
+  config?: {
+    accessType?: string;
+    entryPointAccess?: string;
+  };
+}
+
+export interface ScheduledMeetSession {
+  id: string;
+  title: string;
+  specialty: string;
+  doctorOrGuide?: string;
+  phaseId: string;
+  date: string;
+  time: string;
+  durationMinutes: number;
+  meetUri: string;
+  meetCode: string;
+  notes?: string;
+  calendarEventId?: string;
+  createdAt: string;
+}
+
+// Create a new Google Meet virtual space
+export const createMeetSpace = async (
+  accessToken: string,
+  accessType: 'OPEN' | 'TRUSTED' | 'RESTRICTED' = 'OPEN'
+): Promise<MeetSpace> => {
+  const res = await fetch('https://meet.googleapis.com/v2/spaces', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      config: {
+        accessType
+      }
+    })
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error?.message || `Error en Google Meet API (${res.status})`;
+    throw new Error(message);
+  }
+
+  const data = await res.json();
+  return {
+    name: data.name || '',
+    meetingUri: data.meetingUri || (data.meetingCode ? `https://meet.google.com/${data.meetingCode}` : 'https://meet.google.com'),
+    meetingCode: data.meetingCode || (data.name ? data.name.replace('spaces/', '') : ''),
+    config: data.config
+  };
+};
+
+// Retrieve space information
+export const getMeetSpaceInfo = async (
+  accessToken: string,
+  spaceName: string
+): Promise<MeetSpace> => {
+  const cleanName = spaceName.startsWith('spaces/') ? spaceName : `spaces/${spaceName}`;
+  const res = await fetch(`https://meet.googleapis.com/v2/${cleanName}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    }
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `No se pudo consultar el espacio de Meet (${res.status})`);
+  }
+
+  const data = await res.json();
+  return {
+    name: data.name,
+    meetingUri: data.meetingUri,
+    meetingCode: data.meetingCode,
+    config: data.config
+  };
+};
+
+// Add scheduled consultation with Meet link to Google Calendar
+export const scheduleMeetInGoogleCalendar = async (
+  accessToken: string,
+  session: {
+    title: string;
+    description: string;
+    startDateTime: string; // ISO string or YYYY-MM-DDTHH:mm:ss
+    endDateTime: string;   // ISO string or YYYY-MM-DDTHH:mm:ss
+    meetUri: string;
+  }
+): Promise<{ id: string; htmlLink?: string }> => {
+  const eventPayload = {
+    summary: `🩺 ${session.title}`,
+    description: `${session.description}\n\n🔗 Enlace de Google Meet: ${session.meetUri}\nOrganizado vía Cyclia Biorhythms.`,
+    location: session.meetUri,
+    start: {
+      dateTime: session.startDateTime,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    },
+    end: {
+      dateTime: session.endDateTime,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    },
+    colorId: '2' // Sage green in Google Calendar
+  };
+
+  const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(eventPayload)
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Error al guardar cita en Google Calendar (${res.status})`);
+  }
+
+  return await res.json();
+};
+

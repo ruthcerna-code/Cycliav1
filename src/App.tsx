@@ -17,7 +17,10 @@ import { LogModal } from './components/LogModal';
 import { ChatDrawer } from './components/ChatDrawer';
 import { CalendarView } from './components/CalendarView';
 import { CycleProjectionsCard } from './components/CycleProjectionsCard';
-import { Sparkles } from 'lucide-react';
+import { GoogleMeetView } from './components/GoogleMeetView';
+import { MoodAnalyticsView } from './components/MoodAnalyticsView';
+import { MoodAnalyticsPreviewCard } from './components/MoodAnalyticsPreviewCard';
+import { Sparkles, Video } from 'lucide-react';
 import { 
   PHASES_DATA, 
   INITIAL_VITALS, 
@@ -105,6 +108,14 @@ export default function App() {
                 onSelectDay={setCurrentDay}
               />
 
+              {/* Mood Analytics Correlation Preview */}
+              <MoodAnalyticsPreviewCard
+                currentDay={currentDay}
+                currentPhase={currentPhase}
+                currentMood={symptoms.mood}
+                onOpenFullAnalytics={() => setCurrentView('moods')}
+              />
+
               {/* Two-Column Layout for Cycle Syncing & Interactive Symptom Logger */}
               <div className="space-y-6">
                 <CycleSyncingCard currentPhase={currentPhase} />
@@ -112,6 +123,27 @@ export default function App() {
                   symptoms={symptoms}
                   onUpdateSymptoms={handleUpdateSymptoms}
                 />
+              </div>
+
+              {/* Google Meet & Telehealth Quick Action Card */}
+              <div className="bg-gradient-to-r from-teal-900/80 via-stone-900 to-teal-950 text-white rounded-2xl p-5 border border-teal-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[11px] font-medium border border-teal-500/30">
+                    <Video className="w-3 h-3" />
+                    <span>Google Meet Integrado</span>
+                  </div>
+                  <h4 className="text-base font-serif font-medium">¿Necesitas una consulta médica o asesoría biorrítmica?</h4>
+                  <p className="text-xs text-stone-300 max-w-xl">
+                    Crea videollamadas instantáneas con Google Meet o agenda una sesión de ginecología, nutrición o SPM vinculada a tu Google Calendar.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCurrentView('meet')}
+                  className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 text-stone-950 font-semibold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span>Abrir Google Meet</span>
+                </button>
               </div>
 
               {/* Longitudinal History & Regularity Grid */}
@@ -141,6 +173,28 @@ export default function App() {
               <CalendarView
                 currentDay={currentDay}
                 onSelectDay={setCurrentDay}
+                currentPhase={currentPhase}
+              />
+            </div>
+          )}
+
+          {/* Dedicated Mood Analytics View */}
+          {currentView === 'moods' && (
+            <div className="space-y-6">
+              <MoodAnalyticsView
+                currentDay={currentDay}
+                onSelectDay={setCurrentDay}
+                currentPhase={currentPhase}
+                onUpdateCurrentDayMood={(newMood) => setSymptoms(prev => ({ ...prev, mood: newMood }))}
+              />
+            </div>
+          )}
+
+          {/* Dedicated Google Meet & Telehealth View */}
+          {currentView === 'meet' && (
+            <div className="space-y-6">
+              <GoogleMeetView
+                currentDay={currentDay}
                 currentPhase={currentPhase}
               />
             </div>

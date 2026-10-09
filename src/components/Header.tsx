@@ -38,6 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
     overview: 'Panel Principal',
     calendar: 'Calendario del Ciclo',
     projections: 'Proyecciones (3 Ciclos)',
+    moods: 'Mood Analytics',
+    meet: 'Telemedicina Google Meet',
     wheel: 'Dial Biológico',
     vitals: 'Constantes & Síntomas',
     syncing: 'Cycle Syncing',

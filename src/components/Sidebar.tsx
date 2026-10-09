@@ -13,11 +13,13 @@ import {
   X,
   ChevronRight,
   ShieldCheck,
-  Moon
+  Moon,
+  Video,
+  Brain
 } from 'lucide-react';
 import { CyclePhaseInfo } from '../types/cycle';
 
-export type NavView = 'overview' | 'calendar' | 'projections' | 'wheel' | 'vitals' | 'syncing' | 'hormones' | 'history' | 'settings';
+export type NavView = 'overview' | 'calendar' | 'projections' | 'moods' | 'meet' | 'wheel' | 'vitals' | 'syncing' | 'hormones' | 'history' | 'settings';
 
 interface SidebarProps {
   currentView: NavView;
@@ -42,6 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'overview', label: 'Panel Principal', icon: LayoutDashboard },
     { id: 'calendar', label: 'Calendario del Ciclo', icon: CalendarIcon },
     { id: 'projections', label: 'Proyecciones (3 Ciclos)', icon: TrendingUp },
+    { id: 'moods', label: 'Mood Analytics', icon: Brain },
+    { id: 'meet', label: 'Telemedicina Meet', icon: Video },
     { id: 'wheel', label: 'Dial Biológico & Fases', icon: Orbit },
     { id: 'vitals', label: 'Constantes & Síntomas', icon: Activity },
     { id: 'syncing', label: 'Guía de Cycle Syncing', icon: Compass },
